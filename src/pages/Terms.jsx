@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import { Sparkles } from "lucide-react";
 
 export default function Terms() {
   const { data: settings } = useQuery({
     queryKey: ["public-settings-terms"],
     queryFn: async () => {
-      const l = await base44.entities.Setting.list();
+      const l = await local.entities.Setting.list();
       return l[0] || { salon_name: "Luxe Salon", theme_color: "#b45309" };
     },
   });

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import MobileSelect from "@/components/MobileSelect";
 import { formatDateInput } from "@/lib/salonUtils";
 import { CheckCircle2, Sparkles } from "lucide-react";
@@ -15,9 +15,9 @@ export default function BookAppointment() {
     date: formatDateInput(new Date()), time: "10:00", notes: "",
   });
 
-  const { data: services = [] } = useQuery({ queryKey: ["public-services"], queryFn: () => base44.entities.Service.filter({ active: true }) });
-  const { data: staff = [] } = useQuery({ queryKey: ["public-staff"], queryFn: () => base44.entities.Staff.filter({ active: true }) });
-  const { data: settings } = useQuery({ queryKey: ["public-settings"], queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0] || { salon_name: "Luxe Salon", theme_color: "#b45309" }; } });
+  const { data: services = [] } = useQuery({ queryKey: ["public-services"], queryFn: () => local.entities.Service.filter({ active: true }) });
+  const { data: staff = [] } = useQuery({ queryKey: ["public-staff"], queryFn: () => local.entities.Staff.filter({ active: true }) });
+  const { data: settings } = useQuery({ queryKey: ["public-settings"], queryFn: async () => { const l = await local.entities.Setting.list(); return l[0] || { salon_name: "Luxe Salon", theme_color: "#b45309" }; } });
 
   const accent = settings?.theme_color || "#b45309";
   const field = "w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-300";
@@ -31,11 +31,11 @@ export default function BookAppointment() {
 
     // Find or create a customer profile so reminders can be sent
     let customerId = null;
-    const existing = form.phone ? await base44.entities.Customer.filter({ phone: form.phone }) : [];
+    const existing = form.phone ? await local.entities.Customer.filter({ phone: form.phone }) : [];
     if (existing.length > 0) {
       customerId = existing[0].id;
     } else {
-      const created = await base44.entities.Customer.create({
+      const created = await local.entities.Customer.create({
         name: form.customer_name,
         phone: form.phone,
         email: form.email || undefined,
@@ -43,7 +43,7 @@ export default function BookAppointment() {
       customerId = created.id;
     }
 
-    await base44.entities.Appointment.create({
+    await local.entities.Appointment.create({
       customer_id: customerId,
       customer_name: form.customer_name,
       notes: form.phone ? `Phone: ${form.phone}${form.notes ? " | " + form.notes : ""}` : form.notes,

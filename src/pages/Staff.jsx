@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import PullToRefresh from "@/components/PullToRefresh";
 import useUrlModal from "@/hooks/useUrlModal";
@@ -13,9 +13,9 @@ export default function Staff() {
   const modal = useUrlModal("staff");
   const qc = useQueryClient();
 
-  const { data: staff = [] } = useQuery({ queryKey: ["staff"], queryFn: () => base44.entities.Staff.list() });
-  const { data: invoices = [] } = useQuery({ queryKey: ["invoices"], queryFn: () => base44.entities.Invoice.list("-date", 500) });
-  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0] || { currency: "$" }; } });
+  const { data: staff = [] } = useQuery({ queryKey: ["staff"], queryFn: () => local.entities.Staff.list() });
+  const { data: invoices = [] } = useQuery({ queryKey: ["invoices"], queryFn: () => local.entities.Invoice.list("-date", 500) });
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await local.entities.Setting.list(); return l[0] || { currency: "$" }; } });
 
   const currency = settings?.currency || "$";
   const accent = settings?.theme_color || "#b45309";
@@ -26,7 +26,7 @@ export default function Staff() {
 
   const del = async (id) => {
     if (!confirm("Delete this staff member?")) return;
-    await base44.entities.Staff.delete(id);
+    await local.entities.Staff.delete(id);
     qc.invalidateQueries(["staff"]);
   };
 
@@ -115,8 +115,8 @@ function StaffForm({ item, onClose, onSaved }) {
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    if (item?.id) await base44.entities.Staff.update(item.id, form);
-    else await base44.entities.Staff.create(form);
+    if (item?.id) await local.entities.Staff.update(item.id, form);
+    else await local.entities.Staff.create(form);
     setSaving(false);
     onSaved();
   };

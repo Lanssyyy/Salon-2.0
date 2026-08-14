@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import { formatCurrency, lowStockProducts } from "@/lib/salonUtils";
 import { PackagePlus, Search, Pencil, Trash2, AlertTriangle, Package, X } from "lucide-react";
@@ -12,8 +12,8 @@ export default function Inventory() {
   const [editItem, setEditItem] = useState(null);
   const qc = useQueryClient();
 
-  const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => base44.entities.Product.list() });
-  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0] || { currency: "$" }; } });
+  const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => local.entities.Product.list() });
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await local.entities.Setting.list(); return l[0] || { currency: "$" }; } });
 
   const currency = settings?.currency || "$";
   const filtered = useMemo(() => {
@@ -28,7 +28,7 @@ export default function Inventory() {
 
   const del = async (id) => {
     if (!confirm("Delete this product?")) return;
-    await base44.entities.Product.delete(id);
+    await local.entities.Product.delete(id);
     qc.invalidateQueries(["products"]);
   };
 
@@ -136,8 +136,8 @@ function ProductForm({ item, onClose, onSaved }) {
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    if (item?.id) await base44.entities.Product.update(item.id, form);
-    else await base44.entities.Product.create(form);
+    if (item?.id) await local.entities.Product.update(item.id, form);
+    else await local.entities.Product.create(form);
     setSaving(false);
     onSaved();
   };

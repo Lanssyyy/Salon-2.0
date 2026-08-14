@@ -5,7 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from "recharts";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import KpiCard from "@/components/KpiCard";
 import StatusBadge from "@/components/StatusBadge";
@@ -22,32 +22,32 @@ export default function Dashboard() {
 
   const { data: invoices = [] } = useQuery({
     queryKey: ["invoices"],
-    queryFn: () => base44.entities.Invoice.list("-date", 500),
+    queryFn: () => local.entities.Invoice.list("-date", 500),
   });
   const { data: customers = [] } = useQuery({
     queryKey: ["customers"],
-    queryFn: () => base44.entities.Customer.list("-created_date", 500),
+    queryFn: () => local.entities.Customer.list("-created_date", 500),
   });
   const { data: staff = [] } = useQuery({
     queryKey: ["staff"],
-    queryFn: () => base44.entities.Staff.list(),
+    queryFn: () => local.entities.Staff.list(),
   });
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: () => base44.entities.Product.list(),
+    queryFn: () => local.entities.Product.list(),
   });
   const { data: appointments = [] } = useQuery({
     queryKey: ["appointments"],
-    queryFn: () => base44.entities.Appointment.list("-date", 200),
+    queryFn: () => local.entities.Appointment.list("-date", 200),
   });
   const { data: expenses = [] } = useQuery({
     queryKey: ["expenses"],
-    queryFn: () => base44.entities.Expense.list("-date", 500),
+    queryFn: () => local.entities.Expense.list("-date", 500),
   });
   const { data: settings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const list = await base44.entities.Setting.list();
+      const list = await local.entities.Setting.list();
       return list[0] || { currency: "$", theme_color: "#b45309" };
     },
   });

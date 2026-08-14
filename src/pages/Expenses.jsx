@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import PullToRefresh from "@/components/PullToRefresh";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
@@ -16,23 +16,23 @@ export default function Expenses() {
 
   const { data: expenses = [] } = useQuery({
     queryKey: ["expenses"],
-    queryFn: () => base44.entities.Expense.list("-date", 1000),
+    queryFn: () => local.entities.Expense.list("-date", 1000),
   });
   const { data: settings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const list = await base44.entities.Setting.list();
+      const list = await local.entities.Setting.list();
       return list[0] || { currency: "$" };
     },
   });
   const currency = settings?.currency || "$";
 
   const saveMutation = useMutation({
-    mutationFn: (data) => (data.id ? base44.entities.Expense.update(data.id, data) : base44.entities.Expense.create(data)),
+    mutationFn: (data) => (data.id ? local.entities.Expense.update(data.id, data) : local.entities.Expense.create(data)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses"] }),
   });
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Expense.delete(id),
+    mutationFn: (id) => local.entities.Expense.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses"] }),
   });
 

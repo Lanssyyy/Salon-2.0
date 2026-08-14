@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
-import { Check, Save, AlertTriangle } from "lucide-react";
+import { Check, Save, FolderOpen, Download, Upload, RotateCcw, Archive } from "lucide-react";
 import { motion } from "framer-motion";
 import DeleteAccountSection from "@/components/DeleteAccountSection";
 
@@ -10,11 +10,12 @@ const COLOR_PRESETS = ["#b45309", "#0369a1", "#15803d", "#7c3aed", "#be123c", "#
 
 export default function Settings() {
   const qc = useQueryClient();
-  const { data: existing } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0]; } });
+  const { data: existing } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await local.entities.Setting.list(); return l[0]; } });
 
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [backupMessage, setBackupMessage] = useState("");
 
   useEffect(() => {
     if (existing && !form) {
@@ -32,8 +33,8 @@ export default function Settings() {
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    if (form.id) await base44.entities.Setting.update(form.id, form);
-    else await base44.entities.Setting.create(form);
+    if (form.id) await local.entities.Setting.update(form.id, form);
+    else await local.entities.Setting.create(form);
     setSaving(false);
     setSaved(true);
     qc.invalidateQueries(["settings"]);
@@ -85,6 +86,20 @@ export default function Settings() {
           <Field label="Points Multiplier"><input type="number" step="0.1" className={field} value={form.loyalty_rate} onChange={(e) => setForm({ ...form, loyalty_rate: Number(e.target.value) })} disabled={!form.loyalty_enabled} /></Field>
         </Section>
 
+
+        <Section title="Backup & Data Portability" icon={<Archive className="w-4 h-4" />}>
+          <p className="text-sm text-stone-500">Create, restore, export, or import complete local salon data backups. Exported packages can be moved to another computer.</p>
+          <div className="flex flex-wrap gap-2">
+            <BackupButton icon={<Archive className="w-4 h-4" />} label="Create Backup" onClick={async () => setBackupMessage(`Backup created: ${(await local.backup.create()).name}`)} />
+            <BackupButton icon={<RotateCcw className="w-4 h-4" />} label="Restore Latest" onClick={async () => { const list = await local.backup.list(); if (!list.length) return setBackupMessage("No backups found."); await local.backup.restore(list[0]); setBackupMessage(`Restored backup: ${list[0]}`); qc.invalidateQueries(); }} />
+            <BackupButton icon={<Download className="w-4 h-4" />} label="Export Backup" onClick={async () => { const r = await local.backup.export(); setBackupMessage(r.canceled ? "Export cancelled." : `Exported to ${r.path}`); }} />
+            <BackupButton icon={<Upload className="w-4 h-4" />} label="Import Backup" onClick={async () => { const r = await local.backup.import(); setBackupMessage(r.canceled ? "Import cancelled." : "Backup imported successfully."); qc.invalidateQueries(); }} />
+            <BackupButton icon={<FolderOpen className="w-4 h-4" />} label="Open Data Folder" onClick={() => local.app.openDataFolder()} />
+            <BackupButton icon={<FolderOpen className="w-4 h-4" />} label="Open Backup Folder" onClick={() => local.app.openBackupFolder()} />
+          </div>
+          {backupMessage && <p className="text-xs text-stone-600 break-words">{backupMessage}</p>}
+        </Section>
+
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 disabled:opacity-50">
             {saving ? <Save className="w-4 h-4" /> : <Check className="w-4 h-4" />}
@@ -117,4 +132,7 @@ function Field({ label, children }) {
       {children}
     </div>
   );
+}
+function BackupButton({ icon, label, onClick }) {
+  return <button type="button" onClick={onClick} className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 text-sm font-semibold text-stone-700 hover:bg-stone-50">{icon}{label}</button>;
 }
