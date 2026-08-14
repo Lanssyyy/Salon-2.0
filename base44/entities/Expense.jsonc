@@ -1,0 +1,38 @@
+{
+  "name": "Expense",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Rent",
+        "Utilities",
+        "Supplies",
+        "Salaries",
+        "Marketing",
+        "Maintenance",
+        "Other"
+      ],
+      "default": "Other"
+    },
+    "amount": {
+      "type": "number",
+      "default": 0
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "description",
+    "amount",
+    "date"
+  ]
+}

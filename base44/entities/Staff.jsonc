@@ -1,0 +1,54 @@
+{
+  "name": "Staff",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "Stylist",
+        "Barber",
+        "Colorist",
+        "Beautician",
+        "Manager",
+        "Receptionist"
+      ],
+      "default": "Stylist"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "commission_rate": {
+      "type": "number",
+      "default": 10
+    },
+    "rating": {
+      "type": "number",
+      "default": 5
+    },
+    "avatar": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "revenue_generated": {
+      "type": "number",
+      "default": 0
+    },
+    "appointments_completed": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
