@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import StatusBadge from "@/components/StatusBadge";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -17,17 +17,17 @@ export default function Customers() {
 
   const { data: customers = [] } = useQuery({
     queryKey: ["customers"],
-    queryFn: () => base44.entities.Customer.list("-created_date", 1000),
+    queryFn: () => local.entities.Customer.list("-created_date", 1000),
   });
   const { data: settings } = useQuery({
     queryKey: ["settings"],
-    queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0] || { currency: "$" }; },
+    queryFn: async () => { const l = await local.entities.Setting.list(); return l[0] || { currency: "$" }; },
   });
 
   const currency = settings?.currency || "$";
 
   const saveMutation = useMutation({
-    mutationFn: ({ id, data }) => (id ? base44.entities.Customer.update(id, data) : base44.entities.Customer.create(data)),
+    mutationFn: ({ id, data }) => (id ? local.entities.Customer.update(id, data) : local.entities.Customer.create(data)),
     onMutate: async ({ id, data }) => {
       await qc.cancelQueries({ queryKey: ["customers"] });
       const previous = qc.getQueryData(["customers"]);
@@ -43,7 +43,7 @@ export default function Customers() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Customer.delete(id),
+    mutationFn: (id) => local.entities.Customer.delete(id),
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: ["customers"] });
       const previous = qc.getQueryData(["customers"]);

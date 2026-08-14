@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import { AlertTriangle, Trash2, X } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -10,18 +10,11 @@ export default function DeleteAccountSection() {
 
   const requestDeletion = async () => {
     setSubmitting(true);
-    const user = await base44.auth.me();
-    await base44.integrations.Core.SendEmail({
-      to: user.email,
-      subject: "Account Deletion Request Received",
-      body: `Hi ${user.full_name || ""},\n\nWe've received your request to permanently delete your account (${user.email}) and all associated data. Our team will process this request shortly.\n\nIf you didn't request this, please contact support immediately.`,
-    });
+    await local.auth.logout();
     setSubmitting(false);
     setDone(true);
     setConfirming(false);
-    setTimeout(async () => {
-      await base44.auth.logout("/login");
-    }, 2500);
+    setTimeout(() => { window.location.href = "/login"; }, 1000);
   };
 
   return (
@@ -34,7 +27,7 @@ export default function DeleteAccountSection() {
       </p>
       {done ? (
         <p className="text-sm text-emerald-600 font-medium">
-          Your deletion request has been submitted. You'll be signed out shortly.
+          This local session has been signed out. Use backup restore or administrator tools for data removal.
         </p>
       ) : (
         <button

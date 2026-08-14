@@ -22,9 +22,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
-import BookAppointment from '@/pages/BookAppointment';
 import Terms from '@/pages/Terms';
-import Documentation from '@/pages/Documentation';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -57,11 +55,9 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/book" element={<BookAppointment />} />
       <Route path="/terms" element={<Terms />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/documentation" element={<Documentation />} />
         <Route path="/appointments" element={<Appointments />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/staff" element={<Staff />} />

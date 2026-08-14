@@ -1,12 +1,12 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, CalendarDays, Scissors, Package,
-  ReceiptText, Wallet, BarChart3, Settings as SettingsIcon, LogOut, Sparkles, BookOpen
+  ReceiptText, Wallet, BarChart3, Settings as SettingsIcon, LogOut, Sparkles
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
-import { initials } from "@/lib/salonUtils";
+import { local } from "@/api/localStorageClient";
+import { useAuth } from "@/lib/AuthContext";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -18,17 +18,16 @@ const navItems = [
   { to: "/expenses", label: "Expenses", icon: Wallet },
   { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
-  { to: "/documentation", label: "Documentation", icon: BookOpen },
 ];
 
 export default function Layout({ children }) {
-  const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
 
   const { data: settings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const list = await base44.entities.Setting.list();
+      const list = await local.entities.Setting.list();
       return list[0] || { salon_name: "Luxe Salon", theme_color: "#b45309", currency: "$" };
     },
   });
@@ -37,7 +36,7 @@ export default function Layout({ children }) {
   const salonName = settings?.salon_name || "Luxe Salon";
 
   const handleLogout = async () => {
-    await base44.auth.logout("/login");
+    await logout();
   };
 
   return (

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import StatusBadge from "@/components/StatusBadge";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -20,16 +20,16 @@ export default function Invoices() {
   const [printItem, setPrintItem] = useState(null);
   const qc = useQueryClient();
 
-  const { data: invoices = [] } = useQuery({ queryKey: ["invoices"], queryFn: () => base44.entities.Invoice.list("-date", 1000) });
-  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0] || { currency: "$", salon_name: "Luxe Salon" }; } });
+  const { data: invoices = [] } = useQuery({ queryKey: ["invoices"], queryFn: () => local.entities.Invoice.list("-date", 1000) });
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await local.entities.Setting.list(); return l[0] || { currency: "$", salon_name: "Luxe Salon" }; } });
 
   const currency = settings?.currency || "$";
 
   const createMutation = useMutation({
     mutationFn: async ({ invoiceData, customer, total }) => {
-      await base44.entities.Invoice.create(invoiceData);
+      await local.entities.Invoice.create(invoiceData);
       if (customer) {
-        await base44.entities.Customer.update(customer.id, {
+        await local.entities.Customer.update(customer.id, {
           total_spent: (customer.total_spent || 0) + total,
           total_visits: (customer.total_visits || 0) + 1,
           last_visit_date: new Date().toISOString(),
@@ -148,11 +148,11 @@ function StatBox({ label, value }) {
 }
 
 function InvoiceForm({ onClose, onSaved }) {
-  const { data: customers = [] } = useQuery({ queryKey: ["customers"], queryFn: () => base44.entities.Customer.list() });
-  const { data: staff = [] } = useQuery({ queryKey: ["staff"], queryFn: () => base44.entities.Staff.list() });
-  const { data: services = [] } = useQuery({ queryKey: ["services"], queryFn: () => base44.entities.Service.list() });
-  const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => base44.entities.Product.list() });
-  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0] || { currency: "$", default_tax_rate: 0 }; } });
+  const { data: customers = [] } = useQuery({ queryKey: ["customers"], queryFn: () => local.entities.Customer.list() });
+  const { data: staff = [] } = useQuery({ queryKey: ["staff"], queryFn: () => local.entities.Staff.list() });
+  const { data: services = [] } = useQuery({ queryKey: ["services"], queryFn: () => local.entities.Service.list() });
+  const { data: products = [] } = useQuery({ queryKey: ["products"], queryFn: () => local.entities.Product.list() });
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await local.entities.Setting.list(); return l[0] || { currency: "$", default_tax_rate: 0 }; } });
 
   const [items, setItems] = useState([]);
   const [customerId, setCustomerId] = useState("");

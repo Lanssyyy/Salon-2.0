@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import { formatCurrency, formatDate } from "@/lib/salonUtils";
 import { Download } from "lucide-react";
@@ -10,8 +10,8 @@ import { format, eachMonthOfInterval, startOfYear, endOfYear } from "date-fns";
 
 export default function Reports() {
   const [period, setPeriod] = useState("monthly");
-  const { data: invoices = [] } = useQuery({ queryKey: ["invoices"], queryFn: () => base44.entities.Invoice.list("-date", 2000) });
-  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await base44.entities.Setting.list(); return l[0] || { currency: "$" }; } });
+  const { data: invoices = [] } = useQuery({ queryKey: ["invoices"], queryFn: () => local.entities.Invoice.list("-date", 2000) });
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: async () => { const l = await local.entities.Setting.list(); return l[0] || { currency: "$" }; } });
 
   const currency = settings?.currency || "$";
   const accent = settings?.theme_color || "#b45309";

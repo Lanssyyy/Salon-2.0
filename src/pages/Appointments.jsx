@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { local } from "@/api/localStorageClient";
 import Layout from "@/components/Layout";
 import PullToRefresh from "@/components/PullToRefresh";
 import useUrlModal from "@/hooks/useUrlModal";
@@ -26,17 +26,17 @@ export default function Appointments() {
 
   const { data: appointments = [] } = useQuery({
     queryKey: ["appointments"],
-    queryFn: () => base44.entities.Appointment.list("-date", 1000),
+    queryFn: () => local.entities.Appointment.list("-date", 1000),
   });
-  const { data: customers = [] } = useQuery({ queryKey: ["customers"], queryFn: () => base44.entities.Customer.list() });
-  const { data: staff = [] } = useQuery({ queryKey: ["staff"], queryFn: () => base44.entities.Staff.list() });
-  const { data: services = [] } = useQuery({ queryKey: ["services"], queryFn: () => base44.entities.Service.list() });
+  const { data: customers = [] } = useQuery({ queryKey: ["customers"], queryFn: () => local.entities.Customer.list() });
+  const { data: staff = [] } = useQuery({ queryKey: ["staff"], queryFn: () => local.entities.Staff.list() });
+  const { data: services = [] } = useQuery({ queryKey: ["services"], queryFn: () => local.entities.Service.list() });
 
   // Auto-flag overdue scheduled appointments (date passed, no payment recorded) as No Show
   useEffect(() => {
     const overdue = appointments.filter((a) => a.status === "scheduled" && a.date && new Date(a.date) < new Date());
     if (overdue.length > 0) {
-      Promise.all(overdue.map((a) => base44.entities.Appointment.update(a.id, { status: "no_show" }))).then(() => {
+      Promise.all(overdue.map((a) => local.entities.Appointment.update(a.id, { status: "no_show" }))).then(() => {
         qc.invalidateQueries({ queryKey: ["appointments"] });
       });
     }
@@ -53,7 +53,7 @@ export default function Appointments() {
   }, [appointments.length, customers.length]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Appointment.create(data),
+    mutationFn: (data) => local.entities.Appointment.create(data),
     onMutate: async (newAppt) => {
       await qc.cancelQueries({ queryKey: ["appointments"] });
       const previous = qc.getQueryData(["appointments"]);
@@ -70,7 +70,7 @@ export default function Appointments() {
     mutationFn: async ({ appointment, paymentMethod }) => {
       const customer = customers.find((c) => c.id === appointment.customer_id);
       const total = appointment.price || 0;
-      await base44.entities.Invoice.create({
+      await local.entities.Invoice.create({
         invoice_number: generateInvoiceNumber(),
         appointment_id: appointment.id,
         customer_id: appointment.customer_id || null,
@@ -84,9 +84,9 @@ export default function Appointments() {
         payment_method: paymentMethod,
         status: "paid",
       });
-      await base44.entities.Appointment.update(appointment.id, { status: "completed", payment_status: "paid", payment_method: paymentMethod });
+      await local.entities.Appointment.update(appointment.id, { status: "completed", payment_status: "paid", payment_method: paymentMethod });
       if (customer) {
-        await base44.entities.Customer.update(customer.id, {
+        await local.entities.Customer.update(customer.id, {
           total_spent: (customer.total_spent || 0) + total,
           total_visits: (customer.total_visits || 0) + 1,
           last_visit_date: new Date().toISOString(),
@@ -102,15 +102,12 @@ export default function Appointments() {
   });
 
   const sendReminder = async (appointment, silent = false) => {
-    const customer = customers.find((c) => c.id === appointment.customer_id);
-    if (!customer?.email) return;
-    await base44.integrations.Core.SendEmail({
-      to: customer.email,
-      subject: "Appointment Reminder",
-      body: `Hi ${customer.name},\n\nThis is a reminder for your upcoming appointment:\n\nService: ${appointment.service_name || "—"}\nDate & Time: ${formatDate(appointment.date, "MMM d, yyyy · h:mm a")}\n\nSee you soon!`,
-    });
-    await base44.entities.Appointment.update(appointment.id, { reminder_sent: true });
-    if (!silent) qc.invalidateQueries({ queryKey: ["appointments"] });
+    const message = `Reminder: ${appointment.customer_name || "Customer"} has ${appointment.service_name || "an appointment"} on ${formatDate(appointment.date, "MMM d, yyyy · h:mm a")}.`;
+    await local.entities.Appointment.update(appointment.id, { reminder_sent: true, reminder_note: message, reminder_displayed_at: new Date().toISOString() });
+    if (!silent) {
+      window.alert(message);
+      qc.invalidateQueries({ queryKey: ["appointments"] });
+    }
   };
 
   const statusMutation = useMutation({
@@ -118,7 +115,7 @@ export default function Appointments() {
       const update = { status };
       if (status === "no_show") update.payment_status = "no_show";
       if (status === "cancelled") update.payment_status = "cancelled";
-      return base44.entities.Appointment.update(id, update);
+      return local.entities.Appointment.update(id, update);
     },
     onMutate: async ({ id, status }) => {
       await qc.cancelQueries({ queryKey: ["appointments"] });
@@ -141,7 +138,7 @@ export default function Appointments() {
   });
 
   const moveMutation = useMutation({
-    mutationFn: ({ id, date }) => base44.entities.Appointment.update(id, { date }),
+    mutationFn: ({ id, date }) => local.entities.Appointment.update(id, { date }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["appointments"] }),
   });
 
@@ -377,7 +374,7 @@ function AppointmentForm({ customers, staff, services, defaultDate, onClose, onS
     setSaving(true);
     let customer = customers.find((c) => c.id === form.customer_id);
     if (form.customer_id === "__new__") {
-      customer = await base44.entities.Customer.create({
+      customer = await local.entities.Customer.create({
         name: form.new_customer_name,
         email: form.new_customer_email || undefined,
         phone: form.new_customer_phone || undefined,
